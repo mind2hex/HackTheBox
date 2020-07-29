@@ -1,6 +1,6 @@
 # hackthebox
 
-Set of scripts used in hackthebox
+Walkthrouhgs and a set of scripts used in hackthebox.
 
 ### Scripts list:
 

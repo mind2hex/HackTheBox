@@ -1,6 +1,6 @@
 # hackthebox
 
-Walkthrouhgs and a set of scripts used in hackthebox.
+Scripts and tools that i wrote/use to solve hackthebox problems
 
 ### Scripts list:
 

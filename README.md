@@ -1,3 +1,3 @@
 # hackthebox
 
-Scripts and tools that i wrote/use to solve hackthebox problems
+Scripts that i create to solve machines and challenges from HTB

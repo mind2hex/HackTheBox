@@ -396,7 +396,7 @@ bash-5.1#
 
 ## Referencias
 - [Repositorio de Cacti](https://github.com/Cacti/cacti)
-- [Mind2hex github repo](https://github.com/mind2hex/HackTheBox/Machines/Linux/MonitorsTwo)
+- [Mind2hex github repo](https://github.com/mind2hex/HackTheBox/tree/master/Machines/Linux/MonitorsTwo)
 - [LinPEAS](https://github.com/carlospolop/PEASS-ng/tree/master/linPEAS)
 - [CVE-2021-41091](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-41091)
 - [CVE-2022-46169](https://nvd.nist.gov/vuln/detail/CVE-2022-46169)
